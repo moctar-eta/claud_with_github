@@ -1,0 +1,24 @@
+# Java compilé
+*.class
+out/
+bin/
+target/
+build/
+*.jar
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.classpath
+.project
+.settings/
+
+# Système
+.DS_Store
+Thumbs.db
+
+# Secrets et logs
+.env
+.env.*
+*.log
