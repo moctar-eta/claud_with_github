@@ -1,0 +1,31 @@
+claud_with_github
+
+Dépôt d'entraînement à Java, utilisé aussi pour apprendre à travailler avec Git, GitHub et Claude.
+
+Contenu
+Fichier	Description
+Code.java	Affiche Hello, World! puis les arguments passés au programme
+Etudiant.java	Classe Etudiant avec un nom, un âge et une méthode afficherInfo()
+CLAUDE.md	Consignes pour Claude (structure, conventions, façon de travailler)
+Utilisation
+
+Prérequis : un JDK (Java 17 ou plus).
+
+bash
+git clone https://github.com/moctar-eta/claud_with_github.git
+cd claud_with_github
+javac *.java
+java Code Bonjour Moctar
+
+Résultat attendu :
+
+Hello, World!
+Arguments provided: Bonjour, Moctar
+Workflow Git conseillé
+bash
+git switch -c feature/ma-fonctionnalite   # une branche par sujet
+git add .
+git commit -m "feat: description courte"
+git push -u origin feature/ma-fonctionnalite
+
+Puis ouvrir une Pull Request sur GitHub pour relire les changements avant de les fusionner dans main.
