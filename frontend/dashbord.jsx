@@ -1,80 +1,79 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api, { TOKEN_KEY } from "../api/client";
-import { useAuth } from "../context/AuthContext";
 import Logo from "../components/Logo";
-import { EyeIcon, EyeOffIcon } from "../components/icons";
 
-export default function Login() {
-  const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
+// ملاحظة: عدّل المسار "/api/stats" وأسماء الحقول حسب الـ backend الخاص بك.
+const CARDS = [
+  { key: "salesToday", label: "مبيعات اليوم", suffix: "MRU" },
+  { key: "bottlesSold", label: "قنينات مباعة", suffix: "" },
+  { key: "customers", label: "الزبائن", suffix: "" },
+  { key: "stock", label: "المخزون المتبقي", suffix: "" },
+];
+
+export default function Dashboard() {
+  const [stats, setStats] = useState({});
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
-  const { refresh } = useAuth();
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
-  const submit = async (e) => {
-    e.preventDefault();
-    setError("");
-    setLoading(true);
-    try {
-      const { data } = await api.post("/api/auth/login", { password });
-      localStorage.setItem(TOKEN_KEY, data.token);
-      await refresh();
-      navigate("/");
-    } catch (err) {
-      setError(err.response?.data?.error || "كلمة المرور غير صحيحة");
-    } finally {
-      setLoading(false);
-    }
+  useEffect(() => {
+    let active = true;
+    api
+      .get("/api/stats")
+      .then(({ data }) => active && setStats(data))
+      .catch((err) => {
+        if (!active) return;
+        if (err.response?.status === 401) {
+          localStorage.removeItem(TOKEN_KEY);
+          navigate("/login");
+        } else {
+          setError(err.response?.data?.error || "تعذر تحميل البيانات");
+        }
+      })
+      .finally(() => active && setLoading(false));
+    return () => {
+      active = false;
+    };
+  }, [navigate]);
+
+  const logout = () => {
+    localStorage.removeItem(TOKEN_KEY);
+    navigate("/login");
   };
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-gradient-to-br from-navy-950 via-navy-900 to-navy-700 px-4">
-      <div className="pointer-events-none absolute -top-24 -right-24 h-72 w-72 rounded-full bg-teal-accent/20 blur-3xl" />
-      <div className="pointer-events-none absolute -bottom-24 -left-24 h-72 w-72 rounded-full bg-navy-700/40 blur-3xl" />
-
-      <div className="relative w-full max-w-sm rounded-2xl bg-white p-8 shadow-2xl">
-        <div className="mx-auto mb-4 w-fit rounded-full shadow-lg ring-4 ring-white">
-          <Logo width={110} circle />
+    <div className="min-h-screen bg-gray-50" dir="rtl">
+      <header className="flex items-center justify-between bg-navy-900 px-6 py-3 text-white shadow">
+        <div className="flex items-center gap-3">
+          <Logo width={40} circle />
+          <h1 className="text-lg font-bold">بزيد للغاز</h1>
         </div>
-        <h1 className="mb-1 text-center text-2xl font-bold text-navy-900">بزيد للغاز</h1>
-        <p className="mb-6 text-center text-sm text-gray-500">نظام إدارة مبيعات الغاز</p>
+        <button
+          onClick={logout}
+          className="rounded-lg bg-white/10 px-4 py-1.5 text-sm hover:bg-white/20"
+        >
+          تسجيل الخروج
+        </button>
+      </header>
 
-        <form onSubmit={submit} className="space-y-4">
-          <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">كلمة المرور</label>
-            <div className="relative">
-              <input
-                type={showPassword ? "text" : "password"}
-                required
-                autoFocus
-                dir="ltr"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 pl-10 text-left focus:border-teal-accent focus:outline-none"
-                placeholder="••••••••"
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword((s) => !s)}
-                className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                title={showPassword ? "إخفاء كلمة المرور" : "إظهار كلمة المرور"}
-              >
-                {showPassword ? <EyeOffIcon /> : <EyeIcon />}
-              </button>
+      <main className="mx-auto max-w-5xl p-6">
+        <h2 className="mb-4 text-xl font-semibold text-navy-900">لوحة التحكم</h2>
+
+        {error && <p className="mb-4 text-sm text-red-600">{error}</p>}
+
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {CARDS.map((c) => (
+            <div key={c.key} className="rounded-2xl bg-white p-5 shadow">
+              <p className="text-sm text-gray-500">{c.label}</p>
+              <p className="mt-2 text-3xl font-bold text-navy-900">
+                {loading ? "..." : stats[c.key] ?? 0}
+                {c.suffix && <span className="mr-1 text-sm font-normal text-gray-400">{c.suffix}</span>}
+              </p>
             </div>
-          </div>
-          {error && <p className="text-sm text-red-600">{error}</p>}
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full rounded-lg bg-navy-900 py-2.5 font-semibold text-white hover:bg-navy-800 disabled:opacity-50"
-          >
-            {loading ? "...جارٍ الدخول" : "تسجيل الدخول"}
-          </button>
-        </form>
-      </div>
+          ))}
+        </div>
+      </main>
     </div>
   );
 }
